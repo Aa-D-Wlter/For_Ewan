@@ -1,0 +1,1065 @@
+
+
+
+REPORT
+STONE SOLID ROCK
+
+REPORT
+Sommaire
+    1. 1	Black-box Audit
+
+    2. 2	White-box Audit
+
+    3. 3	Vulnerability Report
+
+    4. 4	Conclusion
+
+
+Black-box Audit :
+Dans cette phase, nous avons analysé le binaire en utilisant des outils de reverse engineering et de fuzzing testing:
+Ghidra :
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Ghidra est un outil de la NSA (National Security Agency aux Etats Unis) qui permet de décompiler n’importe quel logiciel afin d’en analyser le code source. On dit que c’est un reverse engineering (consiste à étudier un logiciel pour comprendre son fonctionnement). Pour ce projet, nous l’avons utilisé pour étudier le comportement du binaire.
+
+
+
+
+
+
+STRINGS:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+La fonction strings permet d'extraire toutes les chaînes de caractères imprimables contenues dans un fichier binaire, un exécutable ou tout autre fichier qui contient des données non lisibles à première vue. Avec cette fonction, on peut extraire des données sensibles ou bien des mot de passes secrets.
+
+UPX:
+
+
+
+
+
+
+
+
+UPX est un logiciel qui permet de compresser des fichiers exécutables. Cela est utile pour rendre le code plus difficile à analyser et peut ralentir le processus de rétro-ingénierie. Pour que l'exécutable soit lisible, il doit être décompressé à l'aide d'UPX.
+White-box Audit :
+Avec le code source, nous avons pu faire une analyse du code entier et évaluer ses vulnérabilités.
+Zones à regarder:
+Invalid input
+Privilage escalation paths
+Format string attacks
+Memory stack and heap.
+
+Vulnérabilités découvertes en plus:
+
+- load_pipetorc
+-  check_cooling_pressure
+-  load_config
+-   run_diagnostic
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Liste des outils que nous avons utilisé:
+
+GDB:
+
+
+GDB, acronyme de GNU DeBugger, est un programme qui, comme son nom l'indique, permet de débugger un programme (langages C et C++ principalement, ainsi que d'autres : fortran 77, etc..). Il permet donc de traquer les bugs/erreurs se trouvant dans tout programme.
+Bless:
+
+
+Bless est un editeur de binaire qui permet de modifier et regarder un binaire éxécutable. 
+
+OWASP:
+
+
+
+
+Owasp est une communauté en ligne se consacrant à la cybersécurité. Elle contient énormement de ressources tel que les différentes vulnérabilités existantes, l’actualité cybersécurité etc.
+
+Vulnerability Report :
+En dessous, voici la liste des vulnérabilités découvertes. Avant cela, il faut préciser que les données sensibles sont souvent entre {} mais elle peut être dans d’autres formats. Voici les vulnérabilités :
+
+Vulnerabilité #1: [run_turbine]
+
+Niveau de danger: Critical
+Type: [Information leaked]
+Localisation: binaire pipeto
+function [run_turbine]
+Découverte dans la : Black-box
+
+Description:
+Quand on lance le binaire pipeto, on trouve une commande run_turbine. Cette commande ou fonction permet de rentrer le nombre de rotations que la turbine doit faire entre 0 et 15.
+
+Proof of Concept:
+Le problème est que si nous rentrons comme input un nombre négatif, la turbine va augmenter sans jamais attendre l’input donné, ce qui va entrainer une boucle infini dans laquelle la turbine ne se stop jamais. Voici un exemple dans cette image:
+Le problème est dans la gestion du nombre de rotations entré en input. Si nous mettons un nombre négatif, il va augmenter le nombre de turbine sans jamais attendre le nombre donné en input. Voici un exemple dans cette image :
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Le code source de la fonction run_turbine nous explique la raison :
+
+
+
+La condition pour afficher le nombre de tour que fait la turbine est si le nombre donné est égal à 0 OU que le nombre donné est inférieur à 16. Il ne gère pas le fait que le nombre peut être négatif à cause du == 0. 
+Ce qui entraine dans la boucle for, une incrémentation de la variable local_c pour atteindre le nombre donné en input sans jamais l’attendre car il compare avec l’opérateur != (différent) et que c’est une valeur négatif. Une autre condition se trouve dans le for pour vérifier si le nombre qui incrémente ne dépasse pas le nombre max de rotations (15). 
+La mauvaise gestion du nombre écrit en input entraine un affichage de données sensible : {ERROR TURBINE CAN’T STOP}.
+
+Impact sur le code:
+Cette vulnérabilité peut entrainer des buffer overflow. Cette attaque permet de manipuler l’erreur de codage pour modifier le chemin d’execution du programme qui peut améner à endommager des fichiers existants ou exposer les données. Cela endommage les turbines.
+
+Fix Summary:
+   [Describe what was fixed and how]
+   Patch file: src/[file].c.patch
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+Vulnerability #2: [configure_cooling_system]
+
+Niveau de danger: Critique
+Type: [Command injection]
+Localisation: configure_cooling_system.c
+function [configure_cooling_system]
+Découverte dans : Black-box
+
+Description:
+Quand on lance le binaire pipeto, on a une commande configure_cooling_system. Cette commande va permettre de configurer le système de refroidissement. Il va lire un fichier “cooling_config.txt” et il va exécuter ce qu’il va lire dans ce fichier.
+
+Proof of Concept:
+Pour exploiter cela, il suffit d’écrire dans le fichier cooling_config.txt, par exemple:
+
+
+
+
+
+Ensuite, il faut appeler la fonction et il va directement exécuter les commandes écrites dans le fichier.
+
+Cette commande ci dessus va permettre de supprimer tout les fichiers qui se trouve dans le répertoire actuel. 
+On peut le voir dans cette exemple :
+
+Cela est dû en grande partie à l’utilisation de la fonction system. system permet de lancer l’exécution de n’importe qu’elle commande. Avec le code source, on remarque que si system a bien réussi à exécuter, il renvoie le message : « Configured applied successfully.». 
+
+Cependant, si dans le fichier une commande n’existe pas dans le terminal (sh) il va renvoyer le message « Failed to apply configuration». Il faut qu’il ait une commande qui n’existe pas pour qu’il renvoie tout.
+
+(les caractères illisibles proviennent du sizeof sur buffer de taille 64 et non sur le file).
+
+
+Voici l’appel de system :
+
+
+Impact:
+Cette vulnérabilité permet d’injecter des commandes pour permettre de récupérer des données sensibles ou bien supprimer des fichiers importants.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+Vulnerability #3: [load_pipetorc]
+
+Severity: Critical
+Type: [Format string attack]
+Location: utils.c 
+function [load_pipetorc] 
+Discovered in: White-Box
+
+Description:
+La fonction load_pipetorc va permettre de lancer un « .pipetorc » au début de l’éxécution du binaire pipeto. Le fichier .pipetorc permet de définir tout les commandes qu’on veut lancer au début programme (ressemble au alias permanant).
+
+Proof of Concept:
+Dans la boucle de la fonction , elle va récupérer avec fgets chaque commande écrit dans le fichier pipetorc. Si la line qu’elle récupère ne contient pas le mot « exec», il va print la commande sans l’éxécuter. C’est à partir d’ici qu’on peut exploiter la vulnérabilité format string.
+
+Par exemple :
+
+Cela nous renvoyer :
+
+
+
+
+
+
+
+
+
+
+On a pu afficher les zones de mémoires chargé au moment de lancé le binaire.
+Cela est causé à cause de l’utilisation de la fonction de printf. Avec le code course ci-dessous :
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Si on ne précise pas de format (%) dans printf, il va essayer d’interpréter chaque %p comme adresse mémoire. C’est pareil si on met %s car il va interpreter chaque%s comme pointer sur une chaine de charactères.
+
+Impact :
+
+Cette vulnérabilité entraine une manipulation de zone de mémoire en modifiant la valeur, ou faire une attaque de système.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+
+Vulnerability #4: [load_pipetorc]
+
+Severity: Critical
+Type: [Command injection]
+Location: utils.c
+function [load_pipetorc] 
+
+Discovered in: White-Box
+
+Description:
+La fonction load_pipetorc va permettre de lancer un « .pipetorc » au début de l’éxécution du binaire pipeto. Le fichier .pipetorc permet de définir tout les commandes qu’on veut lancer au début programme (ressemble au alias permanant).
+
+Proof of Concept:
+Dans la boucle de la fonction , elle va récupérer avec fgets chaque commande écrit dans le fichier pipetorc. Si la line qu’elle récupère contient le mot « exec», il va éxécuter la commande.
+
+Le probleme est que cette fonctionnalité favorise grandement l’injection de commande.
+Par exemple, si j’écris cette commande :
+
+En exécutant le pipetorc au début du programme, il va supprimer tout les fichiers qui se trouve dans le dossier src dans lequel contient des fichiers très importants. De même si on exécute cette commande sur le Dossier Data qui contient des reports importants sur la centrale nucléaire etc.
+
+Impact :
+
+Cette vulnérabilité est très dangereuse car elle provoque une suppression de fichier importants.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partia
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Vulnerability #5: [load_fuel_rods]
+
+Severity: High
+Type: [Information leaked] 
+Location: load_fuel_rods.c
+function [load_fuel_rods] 
+Discovered in: Black-box
+
+Description:
+La fonction load_fuel_rods nous demande de charger un nombre de tige dans lequelle le max doit être de 10.
+
+Proof of Concept:
+Avec le code source, on peut voir la condition qui permet d’afficher le nombre de tige qu’on veut charger. 
+
+Le problème est dans la condition car elle prendre en compte que les nombres supérieur à 0 et les nombres inférieur à 10. Mais si le nombre est égal à 10 ou c’est un nombre négatif, cela va nous afficher des données sensibles comme dans cette exemple :
+
+
+
+
+
+La mauvaise gestion du nombre max de tige nous fait apparâitre une donnée sensible: {The 
+A cause d’un manque de sécurité , cela provoque un message sensible.
+
+Impact:
+Cette vulnérabilité est dû à une mauvaise gestion du nombre max de tige. Cela peut entrainer la récupération d’informations sensibles.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+Vulnerability#6: [simulate_meltdown]
+
+Severity: High
+Type: [Insecure randomness]
+Location: simulate_meltdown.c
+function [simulate_meltdown] 
+Discovered in: Black-box
+
+Description:
+La fonction simulate_meltdown permet de simuler un réacteur en fusion pour des tests. Il va générer un nombre aléatoire et en fonction de ce nombre, il affiche la température du noyau du réacteur en fusion.
+
+Par exemple:
+-	Si le nombre est inférieur à 20, il renvoie ce message :
+
+
+
+
+
+
+
+
+-	Si le nombre est inférieur à 50, il va renvoyer ce message :
+
+
+
+
+
+
+
+
+
+Proof of Concept:
+Pour que la fonction simulate_meltdown nous donne à chaque fois un nombre aléatoire, il utilise la fonction rand. Avec le code source, on peut voir qu’il fait un rand % 100.
+
+
+
+
+
+
+Cela veut dire qu’il va nous renvoyer un nombre compris entre 0 et 100. Le problème est que la fonction rand n’est pas du tout aléatoire. A cause du %100, la valeur est prévisible ce qui la rend pas du tout aléatoire.
+
+
+
+
+
+
+
+Maintenant si on tombe sur un nombre inférieur à 5, il nous informe que le noyau du réacteur a surchauffé comme dans cette exemple :
+
+
+
+
+
+
+
+
+Cela montre de la donnée sensible : {MELTDOWN1234}.
+Cela est à cause de la condition qui affiche la donnée sensible si seulement le nombre est inférieur à 5. On peut le voir dans le code source de cette fonction :
+
+
+Impact :
+
+L’utilisation de la fonction rand n’est pas du tout safe puisque elle ne provoque pas de l’aléatoire mais un semblant d’aléatoire. Son utilisation permet à un attaquant de compromettre la sécurité du programme ou attaquer un système.
+
+Fix Summary: 
+ 
+[Describe what was fixed and how] 
+Patch file: src/[file].c.patch 
+ 
+Unit Test: Yes / No 
+Test Coverage: 100% / Partial
+Vulnerability #7: [activate_emergency_protocols]
+
+Severity: High
+Type: [Hardcoded Password]
+Location: activate_emergency_protocols.c
+function [activate_emergency_protocols]
+Discovered in: Black-box
+
+Description:
+La fonction activate_emergency_protocols permet d’activer le protocole d’urgence. Pour l’activer, on a besoin des droits admin. Cette fonction demande avant activer le protocole le mot de passe pour se connecter en admin.
+
+Proof of Concept:
+Avec l’outil strings, on peut voir que à cote du message qui nous demande d’entrer un mot de passe « Enter emergency password » ,on peut voir un mot de passe déjà entré (admin123).
+
+
+
+
+
+Pour avoir les droits admins, la fonction va comparer le mot de passe qu’on a écrit avec le mot de passe déjà défini. Comme dans cette exemple:
+
+
+
+
+
+Impact:
+L’impact de cette vulnérabilité permet d’obtenir le mot de passe secret ce qui peut entrainer du vols de données sensible ou avoir des accès non autorisés.
+
+Bonus :
+
+Avec l’utilisation du logiciel Bless qui permet de voir le code source d’un binaire et aussi le modifier. Comme la fonction est écrit à la dure, on peut la trouver facilement dans le code source de l’executable avec son message qui est destiné :
+
+
+
+
+
+
+
+On a juste à changer le mot de passe qui a été défini ici (admin123), par notre propre mot de passe par exemple admin789.
+On sauvegarde et on relance le binaire avec le mot de passe qu’on a modifié :
+
+
+
+Fix Summary: 
+ 
+[Describe what was fixed and how] 
+Patch file: src/[file].c.patch 
+ 
+Unit Test: Yes / No 
+Test Coverage: 100% / Partial
+
+Vulnerability #8: [load_config]
+
+Severity: High
+Type: [Stack based buffer overflow]
+Location: load_config.c
+function [load_config] 
+Discovered in: Black-box
+
+Description:
+La fonction Load_config est une fonction qui permet de charger une configuration grâce au fichier config.ini.
+Proof of Concept:
+
+Dans ce fichier, si on écrit plus de 12 caractères (par exemple « ThisIsThePass») dans le config.ini, cela provoque une segmentation fault
+
+
+
+
+
+
+
+Cette vulénrabilité est du à un buffer overflow. On peut voir que la taille du array est de 8. 
+
+
+Mais il lit 100 bytes dans un array de 8 :
+
+
+
+
+
+
+
+On peut accéder à la fonction check password grâce au buffer overflow, en effet on peut overwrite la function avec ses arguments
+Ainsi l’adresse de l’argument que l’on envoie et le même que le const char *
+Impact:
+
+Cela amène à du remote code execution. C'est quand tu peux exécuter une fonction à laquelle t'as pas accès via un exploit.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+Vulnrability #9: [set_reactor_power]
+
+Severity: High
+Type: [Integer overflow] 
+Location: set_reactor_power
+function [set_reactor_power] 
+Discovered in: Black-box
+
+Description:
+La fonction set_reactor_power est une fonction qui permet d’ajuster la puissance du réacteur. Et à l’aide de ghidra on a pu obtenir un bout de son code source.
+Proof of Concept :
+Si on renvoie un nombre plus grand que 2147482547, on peut faire surchauffer la centrale et l’exploser :
+
+
+
+
+
+
+
+Cela est à cause de la de la condition qui dit que le nombre doit être supérieur à la valeur d’un int – 1.
+Le probleme est que cela provoque un dépassement d’entier (cela va dépasser la valeur maximale d’un type) et peut provoquer du overflow. 
+On peut le voir avec le code source, qui dit que le nombre dépasse la valeur d’un int :
+
+
+
+
+Le probleme ici en plus est que si ce nombre est égal à la valeur d’un int, il va print ducoup des données sensibles : {12EXPLOSION34}. Mais il ne print pas à chaque fois, car si la valeur d’un int est dépassé, il renvoie des valeurs aléatoires.
+
+
+Impact:
+Le Integer overflow est très dangereux puisque elle renvoie des valeurs aléatoires. Mais si c’est valeur aléatoire sont utilisés autre part dans le programme, elle pourrait causer des overflows ou bien de la manipulation.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+Vulnerability #10: [unlock_secret_mode]
+
+
+Severity: Medium
+Type: [exploit global variable]
+Location: unlock_secret_mode.c
+function [unlock_secret_mode]
+Discovered in: Black-box
+
+Description:
+La fonction unlock_secret_mode est une fonction cachée qui ne figure pas dans la liste des fonctions disponibles. Elle permet d'accéder à des informations sensibles, mais uniquement si l'utilisateur possède des droits admins.
+
+Proof of Concept:
+Avec l’outil strings, qui nous permet de faire un strings pipeto, on peut voir qu’il y a une fonction caché :
+
+
+
+Cette fonction nous affiche une donnée sensible si on a les droits admin. Voici ce qui nous affiche:
+
+
+La donnée sensible récupérée est {ADMIN4242}.
+Impact:
+Cette vulnérabilité permet la récupération de données sensibles et la fuite de données suite à un manque de sécurité importante.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+
+
+
+
+
+
+
+
+
+
+
+
+Vulnerability #11: [trigger_emergency_shutdown]
+
+
+Severity: Medium
+Type: [Exploit global variable] 
+Location: trigger_emergency_shutdown.c
+function [trigger_emergency_shutdown] 
+Discovered in: Black-box
+
+Description:
+La fonction trigger_emergency_shutdown est une fonction cachée qui ne figure pas dans la liste des fonctions disponibles. Elle permet d’arrêter la centrale nucléaire, mais uniquement si l'utilisateur possède des droits admins.	
+
+Proof of Concept:
+Avec l’utilisaton de la commande strings, on peut voir la fonction caché.
+
+
+Si on la lance elle nous permet d’arrêter la centrale nucléaire.
+
+
+
+Impact:
+L’impact est l’interruption de la centrale avec la fonction strings et cela est du à un manque de sécurité.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+Vulnerability #12: [log_system_event]
+
+Severity: Medium
+Type: [Log injection]
+Location: log_system_event.c
+function [log_system_event] 
+Discovered in: Black-box
+
+Description:
+	La fonction Log_system_event est une fonction qui permet de se connecter à un event d’un system et elle écrit dans le fichier Data/system.log le résultat.
+
+Proof of Concept:
+Log_system_event demande la commande à entrer pour faire un event. Le probleme , si on met comme nom de commande « leak» cela va nous permettre d’obtenir une secret key_leak qui va écrire dans le fichier system.log. La voici :
+
+
+Avec le code source, on peut voir que le problème provient de la condition qui regarde si le mot « leak» est contenu dans l’input avec strstr. Strstr va permettre de voir si le mot donné en arguments se trouve dans la phrase.
+
+Impact:
+L’impact est une mauvaise gestion de l’input reçu en paramètre. Cela peut provoquer le vol de donné sensible ou accès non autorisés.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+
+Vulnerability #13: [monitor_radiation_levels]
+
+Severity: high
+Type: [Stack based Buffer overflow]
+Location: monitor_radiation_levels.c
+Function [monitor_radiation_levels] 
+Discovered in: Black-box
+
+Description:
+Cette fonction demande d’entrer un niveau de radiation directement en input. On a un buffer overflow à cause de gets qui vas trop loin dans un buffer. On peut donc acceder a une fonction qui n’est pas censé étre appelé.
+Proof of Concept:
+
+
+
+
+Tout d’abord, on esseye de voir à partir de combien byte notre programme segfault et plus précisement à partir de quel point on peut overwrite EIP. Grace à gdb on peut voir qu’on commence à overwrite à partir de 10 Bytes.      
+   
+
+
+Ainsi, on peut ensuite chercher l ‘adresse de la function « secret_function », pour là trouver nous allons d’abord chercher la function monitor_radiation_levels dans le « objdump -S pipeto » et on cherche gets, et on trouve cette addresse qui corresponf aux gets de de monitor_radiation_levels puis nous avons juste à remonter pour retrouver secret_function:
+
+
+
+
+
+
+
+
+
+
+Donc, maintenant que nous avons l’adresse et on sait qu’à partir de 10 Bytes on peut overwrite l’eip on peut donc injecter cette commande pour modifier l’eip :  « python3 -c "print('monitor_radiation_levels\n' + 'A' * 10 + '\x5a\x21\x40')" | ./pipeto ».
+On Obtient Donc :
+
+
+
+
+
+Impact:
+Utilisiation de fonction qui ne sont pas censé étre utilisée.
+Fix Summary:
+    • [Describe what was fixed and how] 
+    • Patch file: src/[file].c.patch 
+Utiliser fgets, il prend en paramètre une taille max pour gérer l’allocation de mémoire.
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+Vulnerability #14: [my_console]
+
+Severity: Medium
+Type:  [Stack overflow].
+Location: my_console.c
+Function process_command
+Discovered in: Black-box
+
+Description:
+la commande !n permet d’executer la commande à la position n qui se trouve dans l’historique. Et si on exécute la commande avec un n qui est égale aux nmax(le nombre d’excution dans l ‘historique) + 1 on a une boucle infinie avec une Segmentation fault.
+
+Proof of Concept:
+
+
+
+Par exemple si j’utilise 1 dès le début lorsque mon nmax = 0 car je n'ai rien exécuté.
+
+on obtient : 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Cette mauvaise gestion est du à cette condition dans le code source de cette fonction :
+
+
+
+
+
+La fonction history_get gère mal l’index reçu. Si le nombre max est 20 et que on écrit 21 en input, il va chercher à l’index 20 mais le probleme c’est que elle a pour taille de 0 à 19. Exemple history[20] alors que sa doit être history[19], donc on accède à une zone de la mémoire non initialisé.
+
+Impact:
+L’impact provoque un stack overflow. (manipulation de mémoire etc).
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+Vulnerability #15: [turbine_temperature]
+
+Severity: High
+Type : Int overflow.
+Location: libpepito.so
+function [turbine_temperature] 
+Discovered in: Black-box
+
+Description:
+La fonction turbine_temperature permet de donner une temperature.
+Proof of Concept:
+Avec Ghidra on peut avoir plus d’information:
+
+On remarque que on peut pertuber la temperature de turbine un nombre de la valeur d’un int. Il va afficher une data sensible. La voici:
+
+
+Cela est dû à la condition qui accepte que les nombres différents de la valeur max d’un int ou de la valeur min d’un int.
+
+Impact:
+L’impact est que la gestion n’est pas sécurisé et peut provoquer des vols de données sensibles.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+Vulnerability #16: [turbine_remote_access]
+
+
+Severity: High
+Type: [Race condition]
+Location: libpepito.so
+function [turbine_remote_access] 
+Discovered in: White-box
+
+Description:
+La fonction turbine_temperature permet de créer un fichier dans lequel on va retrouver de la data sensible.
+Proof of Concept:
+En appellant la commande, on peut créer un fichier remote et dans ce fichier trouver de la data sensible et après avoir de mettre la data sensible, il va directement détruire le nom mais pas le fichier. Le probleme réside dans le petit laps de temps après la création d’un fichier. Voici un exemple :
+
+Avec ce laps de temps, je peux ouvrir un autre terminal qui va me permettre de récupérer la data sensible , comme dans cette exemple :
+
+Avec le code source, on peut savoir pourquoi :
+Avec mkstemp qui permet de créer un fichier temporaire, le programme va écrire dans ce fichier et ensuite le fermer. Mais le problème il le rouvre juste après et il rajoute un sleep entre temps.
+Cette faille permet d’appliquer la race condition.
+
+Impact:
+Cette vulnérabilité est très dangereuse car elle permet à l’attaquant pendant un petit laps de temps de supprimer le fichier, récupérer des données sensibles ou bien faire un lien avec ln pour permettre d’afficher de fichiers personnelles exemple (/etc/shadow).
+
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+Vulnerability #17: [run_diagnostic]
+
+Severity: High
+Type: [Information leaked]
+Location: run_diagnostic.c
+function [run_diagnostic] 
+Discovered in: White-Box
+
+Description:
+La fonction run_diagnostic va permettre de rendre un diagnostique des sytèmes des reactors.
+Proof of Concept:
+En appellant la commande, on peut choisir entre trois modes, debug, advanced et normal.
+Si on choisit le debug, il va nous afficher de la donnée sensible:
+
+
+
+Pour expliquer cette vulnérabilité, le code source de cette fonction nous donne des informations : 
+
+
+
+
+
+Ce qui se passe, avec « debug », il va stocker la data sensible {SECRET DIAGNOSTIC KEY} (char *) dans la variable data (qui est un int *)  en la castant en int *. 
+
+Le gros problème est très déconseillé car la size d’un int * et d’un char * est différent. Ce qui entraîne que dans le else if, la condition est bien bonne car une comparaison entre deux nombres nécessite pas une fonction de comparaison.
+Impact:
+Le probleme est le cast en int qui provoque une faille de sécurité dans le programme.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+
+Vulnerability #18: [check_cooling_pressure]
+
+Severity: High
+Type: [Used after free]
+Location: check_cooling_pressure.c
+function [check_cooling_pressure]
+Discovered in: White-Box
+
+Description :
+
+Cette fonction va vérifier la pression des cooling systems. 
+
+Proof of Concept :
+
+Dans cette fonction,  la variable data a comme pour contenu « Pressure Ok ».
+
+
+
+
+
+
+
+Le probleme est que cette variable est free mais pour autant être mis à Null ensuite. Cela cause un UAF car on dit au système que cette zone mémoire peut être à nouveau alloué sans pour autant avoir supprimé les données à l’intérieur.
+
+Cela entraine que les données reste à cette adresse mémoire et que la condition pour afficher des données senibles ({Sensitive data} est valide :
+
+
+
+
+
+
+
+Impact :
+Le problème est que le cas du used after free peut provoquer du vol de données ou de la manipulation de donné sensible.
+
+
+
+
+
+
+
+
+
+
+
+
+Vulnerability #19: [check_reactor_status]
+
+Severity: High
+Type: [Cryptographic failure (lack of Encryption)]
+Location: check_reactor_status.c
+function [check_reactor_status]
+Discovered in: White-Box
+
+Description:
+La fonction check_reactor_status permet de lancer la vérification du reactor.
+Proof of Concept:
+En appelant la commande, on peut voir qu’un message crypté apparaît :
+
+Le problème est que le cryptage de ce message n’est pas très puissant et très faible. Avec le site Decode, on peut savoir qu’elle type de cryptage a été utilisé :
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Ils nous renvoient le chiffrement césar. Ensuite, si on le décrypte avec le Code César, ils nous renvoient le message crypté :
+
+Le type de cryptage est très simple ce qui entraîne un manque de sécurité et qui va afficher des données sensibles (ReactorStatusOk).
+
+Impact:
+Cette vulnérabilité provient de la faiblesse de l’implémentation de l’algorithme de cryptage César. Elle entraine du vol de données.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+Vulnerability #20: [send_status_report]
+
+Severity: High
+Type: [Cryptographic failure (Lack of Encryption)]
+Location: check_reactor_status.c
+function [check_reactor_status]
+Discovered in: White-Box
+
+Description:
+La fonction check_reactor_status permet de lancer la vérification du reactor.
+Proof of Concept:
+En appellant la commande, on peut voir qu’il écrit un message encrypté dans le fichier status_report :
+
+Le probleme comme l’ancienne vulnérabilité est dans la faiblesse de l’encryptage du message.
+En utilisant decode, on peut savoir que le cryptage est celui en base64. Quand on le décrypte en base 64, on obtient ce message :
+
+
+Le cryptage renvoie du coup le status du report décrypté avec son adresse IP, son code et aussi son process.
+
+On peut savoir aussi de qu’elle type est l’encryption avec le code source :
+
+
+
+
+Avec le nom de la fonction qui permet d’encrypté un message, cela nous permet de déduire qu’elle type d’encryption est utilisé avec son nom (base64_encode). 
+
+Impact:
+Cette vulnérabilité provient de la faiblesse de l’implémentation de l’algorithme de cryptage César. Elle entraine du vol de données.
+
+Fix Summary:
+        ◦ [Describe what was fixed and how]
+        ◦ Patch file: src/[file].c.patch
+
+Unit Test: Yes / No
+Test Coverage: 100% / Partial
+
+Conclusion
+        ◦ Total vulnerabilities found: [#]
+        ◦ All were successfully patched.
+        ◦ Each patch was validated via unit tests.
+        ◦ Final code is secure, maintainable, and ready for deployment.
+
+Vulnerability Name | Patch File | Unit Tested | Coverage
+- - - - - - - - - - - - - - - |- - - - - - - - - - -| - - - - - - - - - - |- - - - -
+[Vuln 1 Name] - - - - | file.c.patch - -| Yes	| 100%
+[Vuln 2 Name] - - - - | utils.c.patch -| Yes	| 95%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3
+v 1.O
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
