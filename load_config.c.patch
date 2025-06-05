@@ -1,0 +1,26 @@
+diff --git a/Pipeto/src/commands/load_config.c b/Pipeto/src/commands/load_config.c
+index e9f00df..f4ab176 100644
+--- a/Pipeto/src/commands/load_config.c
++++ b/Pipeto/src/commands/load_config.c
+@@ -14,7 +14,11 @@
+ 
+ void check_password(char *str)
+ {
+-    if (strcmp(str, adminPassword) == 0) {
++    char mdp[22];
++
++    if (strcmp(str, crypt_password(mdp, 22, 'T', 'h', 'i',
++            's', 'I', 's', 'T', 'h', 'e', 'B', 'e', 's', 't',
++            'P', 'a', 's', 's', 'w', 'o', 'r','d', '\0')) == 0) {
+         printf("{Correct password! Welcome, admin.}\n");
+     }
+ }
+@@ -28,7 +32,7 @@ void load_config(UNUSED bool *is_admin, UNUSED history_t *history)
+         return;
+     }
+     dprintf(1, "Loading configuration file from ./config.ini\n");
+-    read(fd, array, 100);
++    read(fd, array, 8);
+     if (0) {
+         printf("Good !\n");
+     } else {

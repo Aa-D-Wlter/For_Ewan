@@ -1,0 +1,38 @@
+diff --git a/Pipeto/src/commands/activate_emergency_protocols.c b/Pipeto/src/commands/activate_emergency_protocols.c
+index b530235..71647c9 100644
+--- a/Pipeto/src/commands/activate_emergency_protocols.c
++++ b/Pipeto/src/commands/activate_emergency_protocols.c
+@@ -9,6 +9,7 @@
+ #include <string.h>
+ #include <stdbool.h>
+ #include <stddef.h>
++#include <stdarg.h>
+ 
+ #include "pipeto.h"
+ #include "macro_pipeto.h"
+@@ -16,7 +17,13 @@
+ void activate_emergency_protocols(bool *is_admin, UNUSED history_t *history)
+ {
+     char input[100];
++    char mdp[9];
++    int password_init = 0;
++    int final_password = 0;
+ 
++    crypt_password(mdp, 9, 'a', 'd', 'm',
++    'i', 'n', '1', '2', '3', '\0');
++    final_password = hashed_password(mdp);
+     printf("Enter emergency password: ");
+     fgets(input, sizeof(input), stdin);
+     input[strcspn(input, "\n")] = 0;
+@@ -24,9 +31,9 @@ void activate_emergency_protocols(bool *is_admin, UNUSED history_t *history)
+         printf("No password entered, emergency protocols not activated.\n");
+         return;
+     }
+-    if (strcmp(input, "admin123") == 0) {
++    password_init = hashed_password(input);
++    if (password_init == final_password) {
+         printf("{Emergency protocols activated, you are now admin !}\n");
+         *is_admin = true;
+     }
+-    return;
+ }

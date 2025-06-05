@@ -1,0 +1,65 @@
+diff --git a/Pipeto/src/commands/set_reactor_power.c b/Pipeto/src/commands/set_reactor_power.c
+index e669fe0..1e5b63a 100644
+--- a/Pipeto/src/commands/set_reactor_power.c
++++ b/Pipeto/src/commands/set_reactor_power.c
+@@ -14,8 +14,24 @@
+ #include "history.h"
+ #include "macro_pipeto.h"
+ 
+-static void condition_power(int new_power)
++static void print_message()
+ {
++    printf("\nReactor power adjustment may be incorrect.\n");
++    printf("Reactor systems are behaving erratically!\n");
++    printf("Reactor core temperature rising uncontrollably...\n");
++    printf("{12EXPLOSION34}\n");
++    printf("Emergency shutdown initiated!\n\n");
++}
++
++static void condition_power(int input_power)
++{
++    int new_power = 0;
++
++    if (input_power == 2147483647) {
++        print_message();
++        exit(1);
++    }
++    new_power = input_power;
+     if (new_power < 0) {
+         printf("Reactor power set to an invalid value: %d\n", new_power);
+         printf("Reactor core meltdown imminent!\n");
+@@ -27,22 +43,23 @@ static void condition_power(int new_power)
+ 
+ void set_reactor_power(UNUSED bool *is_admin, UNUSED history_t *history)
+ {
+-    char power[11];
+-    int input_power = 0;
++    char power[12];
++    long int input_power = 0;
+     int new_power = 0;
++    char *endp = NULL;
+ 
+     printf("Enter reactor power level: ");
+     fgets(power, sizeof(power), stdin);
+     power[strcspn(power, "\n")] = 0;
+-    input_power = atoi(power);
+-    if (input_power > INT_MAX - 1000) {
+-        printf("\nReactor power adjustment may be incorrect.\n");
+-        printf("Reactor systems are behaving erratically!\n");
+-        printf("Reactor core temperature rising uncontrollably...\n");
+-        printf("{12EXPLOSION34}\n");
+-        printf("Emergency shutdown initiated!\n\n");
+-        exit(1);
++    input_power = strtol(power, &endp, 10);
++    printf("Ici == %ld\n", input_power);
++    if (endp == power || input_power < 0) {
++        printf("Not number\n");
++        return;
++    }
++    if (input_power > 2147483647) {
++        printf("Limit Max\n");
++        return;
+     }
+-    new_power = input_power + 1000;
+     condition_power(new_power);
+ }

@@ -1,0 +1,69 @@
+diff --git a/Pipeto/src/commands/simulate_meltdown.c b/Pipeto/src/commands/simulate_meltdown.c
+index 9adf66a..6780ff4 100644
+--- a/Pipeto/src/commands/simulate_meltdown.c
++++ b/Pipeto/src/commands/simulate_meltdown.c
+@@ -10,9 +10,11 @@
+ #include <time.h>
+ #include <string.h>
+ #include <stdbool.h>
++#include <time.h>
+ 
+ #include "history.h"
+ #include "macro_pipeto.h"
++#include "pipeto.h"
+ 
+ static void check_random_number_superior(int random_number,
+     char reactor_status[])
+@@ -26,16 +28,16 @@ static void check_random_number_superior(int random_number,
+     }
+ }
+ 
+-static void check_random_number(int random_number,
+-    char reactor_status[], char secret_code[])
++static void check_random_number(int random_number, char reactor_status[],
++    char secret_code[], bool *is_admin)
+ {
++    if (*is_admin == true) {
++        printf("Critical Error: Secret Code Leaked: %s\n", secret_code);
++        return;
++    }
+     if (random_number < 10) {
+         printf("Meltdown simulated! Reactor core is overheating.\n");
+         strcpy(reactor_status, "Reactor Overheating");
+-        if (random_number < 5) {
+-            printf("Critical Error: Secret Code Leaked: %s\n", secret_code);
+-            return;
+-        }
+     } else if (random_number < 20) {
+         printf("Warning: Reactor core temperature rising.\n");
+         strcpy(reactor_status, "Reactor Warning");
+@@ -46,12 +48,24 @@ static void check_random_number(int random_number,
+     printf("Reactor core status: %s\n", reactor_status);
+ }
+ 
++static void check_number_integer(char reactor_status[], char secret_code[]
++    ,bool *is_admin)
++{
++    int random = 0;
++
++    srand(time(NULL));
++    random = rand() % 1000;
++    check_random_number(random, reactor_status, secret_code, is_admin);
++}
++
+ void simulate_meltdown(UNUSED bool *is_admin, UNUSED history_t *history)
+ {
+-    char reactor_status[32] = "Reactor Stable";
+-    int random_number = rand() % 100;
+-    char secret_code[16] = "{MELTDOWN1234}";
++    char reactor_status[16] = {0};
++    char secret_code[16] = {0};
+ 
+-    printf("Generated random number: %d\n", random_number);
+-    check_random_number(random_number, reactor_status, secret_code);
++    crypt_password(reactor_status, 15, 'R', 'e', 'a', 'c', 't', 'o', 'r',
++    ' ', 'S', 't', 'a', 'b', 'l', 'e', '\0');
++    crypt_password(secret_code, 15, '{', 'M', 'E', 'L', 'T', 'D', 'O', 'W', 'N', '1',
++    '2', '3', '4', '}', '\0');
++    check_number_integer(reactor_status, secret_code, is_admin);
+ }

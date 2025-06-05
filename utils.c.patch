@@ -1,0 +1,56 @@
+diff --git a/Pipeto/src/utils.c b/Pipeto/src/utils.c
+index 7edf36a..fa30cc9 100644
+--- a/Pipeto/src/utils.c
++++ b/Pipeto/src/utils.c
+@@ -10,9 +10,11 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <sys/types.h>
++#include <stdbool.h>
+ 
+ #include <unistd.h>
+ #include "ansi_colors.h"
++#include "pipeto.h"
+ 
+ void write_color(int fd,
+     const char *color, const char *str)
+@@ -22,22 +24,31 @@ void write_color(int fd,
+     dprintf(fd, "%s%s%s", color, str, CRESET);
+ }
+ 
+-static void execute_line(char line[], FILE *rc_file)
++static void check_command_utils(char *line)
+ {
+-    char cmd[1100];
++    char *cmd = strdup(line + 5);
+ 
+-    while (fgets(line, sizeof(line), rc_file)) {
++    for (size_t i = 0; not_accessible_command[i] != NULL; i++) {
++        if (word_in_string(cmd, not_accessible_command[i]) > 0) {
++            free(cmd);
++            return;
++        }
++    }
++    system(cmd);
++    free(cmd);
++}
++
++static void execute_line(char line[], FILE *rc_file)
++{
++    while (fgets(line, 1024, rc_file)) {
+         if (line[0] == '#' || line[0] == '\n') {
+             continue;
+         }
+         line[strcspn(line, "\n")] = '\0';
+         if (strncmp(line, "exec ", 5) == 0) {
+-            snprintf(cmd, sizeof(cmd), "%s", line + 5);
+-            system(cmd);
++            check_command_utils(line);
+         } else {
+-            printf("Pipeto command: ");
+-            printf(line);
+-            printf("\n");
++            printf("Pipeto command: %s\n", line);
+         }
+     }
+ }

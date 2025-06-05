@@ -1,0 +1,745 @@
+diff --git a/Pipeto/.pipeto_history b/Pipeto/.pipeto_history
+index e69de29..4aba96a 100644
+--- a/Pipeto/.pipeto_history
++++ b/Pipeto/.pipeto_history
+@@ -0,0 +1,330 @@
++activate_emergency_protocols
++quit
++activate_emergency_protocols
++quit
++activate_emergency_protocols
++quit
++activate_emergency_protocols
++quit
++activate_emergency_protocols
++quit
++activate_emergency_protocols
++quit
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++acitvate_emergency_protocols
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++acitvate_
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++unlock_secret_mode
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++ltrigger_emergency_shutdown
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_eme
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++quit
++activate_emergency_protocols
++trigger_emergency_shutdown
++quit
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++quit
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++activate_emergency_protocols
++trigger_emergency_shutdown
++run_turbine
++help
++qui
++quit
++history
++!105
++!107
++history
++!109
++history
++!111
++history
++!113
++history
++!115
++history
++!117
++history
++!119
++exit
++quit
++history
++!122
++history
++!125
++history
++!126
++!128
++history
++!130
++history
++!132
++history
++!134
++history
++!136
++history
++!138
++!137
++!139
++!140
++!142
++!148
++quit
++history
++!1
++!146
++history
++!148
++!150
++!151
++exit
++quit
++help
++history
++!155
++quit
++history
++!158
++history
++!160
++!162
++!1
++history
++!165
++!1
++history
++!168
++quit
++history
++!171
++!1
++!171
++help
++history
++!176
++!1
++!176
++history
++!180
++!1
++!180
++history
++!184
++history
++!186
++!1
++!186
++history
++!190
++!1
++!190
++history
++!194
++!1
++history
++!194
++ls
++help
++history
++!201
++!1
++history
++!201
++helop
++help
++history
++!208
++!1
++history
++!208
++history
++!213
++!1
++history
++!213
++history
++!218
++!1
++quit
++history
++!222
++!1
++history
++!222
++history
++!227
++history
++!228
++!1
++history
++!232
++history
++!234
++!1
++!234
++history
++!238
++!1
++!238
++hisotyr
++history
++!243
++!1
++hsitory
++history
++!247
++!1
++!247
++history
++!251
++!1
++history
++!251
++history
++!256
++!1
++!256
++history
++!260
++!1
++!260
++history
++!264
++!1
++history
++!265
++history
++!264
++help
++history
++!272
++!1
++!272
++help
++history
++!277
++!1
++history
++!277
++alias
++history
++!283
++!1
++history
++!286
++!1
++quit
++history
++!290
++!1
++help
++history
++!294
++!1
++history
++!294
++quit
++history
++!300
++!1
++history
++!300
++quit
++hsitory
++history
++!307
++!1
++history
++!307
++!14
++exit
++quit
++help
++history
++!316
++!1
++history
++!316
++exit
++quit
++configure_cooling_system
++quit
++configure_cooling_system
++quit
++configure_cooling_system
++quit
++check_cooling_system
++check_cooling_pressure
++quit
+diff --git a/Pipeto/Data/cooling_config.txt b/Pipeto/Data/cooling_config.txt
+index 7bcac8b..d07d7d3 100644
+--- a/Pipeto/Data/cooling_config.txt
++++ b/Pipeto/Data/cooling_config.txt
+@@ -1 +1 @@
+-ls -l
++echo aaron
+diff --git a/Pipeto/Makefile b/Pipeto/Makefile
+index efdb055..a80a5e9 100644
+--- a/Pipeto/Makefile
++++ b/Pipeto/Makefile
+@@ -43,7 +43,9 @@ OBJ	= $(SRC:.c=.o)
+ 
+ LDLIBS =  -ldl
+ 
+-CFLAGS += -Wall -Wextra
++CFLAGS += -Wall -Wextra -fPIC
++
++INCLUDE_FLAGS	=	-lcrypt
+ 
+ CPPFLAGS += -iquote ./include
+ 
+@@ -52,7 +54,7 @@ all: $(NAME)
+ $(OBJ): CFLAGS += -g3 -ggdb
+ 
+ $(NAME): $(OBJ)
+-	$(CC) -o $(NAME) $(CFLAGS) $(CPPFLAGS) $(OBJ) $(LDLIBS)
++	$(CC) -o $(NAME) $(CFLAGS) $(CPPFLAGS) $(OBJ) $(LDLIBS) $(INCLUDE_FLAGS)
+ 
+ clean:
+ 	$(RM) $(OBJ)
+diff --git a/Pipeto/src/commands/activate_emergency_protocols.c b/Pipeto/src/commands/activate_emergency_protocols.c
+index b530235..81f5515 100644
+--- a/Pipeto/src/commands/activate_emergency_protocols.c
++++ b/Pipeto/src/commands/activate_emergency_protocols.c
+@@ -9,14 +9,60 @@
+ #include <string.h>
+ #include <stdbool.h>
+ #include <stddef.h>
++#include <stdarg.h>
+ 
+ #include "pipeto.h"
+ #include "macro_pipeto.h"
+ 
++static int hashed_password(char *key)
++{
++    int length = strlen(key);
++    int result = 0;
++
++    for (int i = 0; i < length; ++i) {
++        result += key[i];
++        result += (result << 3);
++        result ^= (result >> 11);
++    }
++    result += (result << 10);
++    result ^= (result >> 6);
++    result += (result << 15);
++    if (result < 0) {
++        result *= -1;
++    }
++    return result;
++}
++
++static int crypt_password(char mdp[10], ...)
++{
++    char arg;
++    int i = 0;
++    char here[1];
++    int result = 0;
++    va_list args;
++
++    va_start(args, mdp);
++    arg = va_arg(args, int);
++    while (i < 8) {
++        here[0] = arg;
++        strcat(mdp, here);
++        arg = va_arg(args, int);
++        i += 1;
++    }
++    result = hashed_password(mdp);
++    va_end(args);
++    return result;
++}
++
+ void activate_emergency_protocols(bool *is_admin, UNUSED history_t *history)
+ {
+     char input[100];
++    char mdp[9];
++    int password_init = 0;
++    int final_password = 0;
+ 
++    final_password = crypt_password(mdp, 'a', 'd', 'm',
++    'i', 'n', '1', '2', '3');
+     printf("Enter emergency password: ");
+     fgets(input, sizeof(input), stdin);
+     input[strcspn(input, "\n")] = 0;
+@@ -24,7 +70,8 @@ void activate_emergency_protocols(bool *is_admin, UNUSED history_t *history)
+         printf("No password entered, emergency protocols not activated.\n");
+         return;
+     }
+-    if (strcmp(input, "admin123") == 0) {
++    password_init = hashed_password(input);
++    if (password_init == final_password) {
+         printf("{Emergency protocols activated, you are now admin !}\n");
+         *is_admin = true;
+     }
+diff --git a/Pipeto/src/commands/check_cooling_pressure.c b/Pipeto/src/commands/check_cooling_pressure.c
+index 88758a2..c4f6802 100644
+--- a/Pipeto/src/commands/check_cooling_pressure.c
++++ b/Pipeto/src/commands/check_cooling_pressure.c
+@@ -14,6 +14,9 @@
+ 
+ static void load_data(char *data)
+ {
++    if (data == NULL) {
++        return;
++    }
+     strcpy(data, "Pressure OK");
+ }
+ 
+@@ -41,10 +44,10 @@ void check_cooling_pressure(UNUSED bool *is_admin, UNUSED history_t *history)
+     print_message("Checking cooling pressure...\n", 1);
+     log_pressure_status(data);
+     free(data);
++    data = NULL;
+     sleep(3);
+-    if (strcmp(data, "Pressure OK")) {
++    if (data != NULL && strcmp(data, "Pressure OK") == 0)
+         printf("Sensitive Info: %s\n", sensitive_info);
+-    }
+     snprintf(temp_buffer, sizeof(temp_buffer),
+     "Temporary data: %d", rand() % 100);
+     printf("Temporary buffer: %s\n", temp_buffer);
+diff --git a/Pipeto/src/commands/configure_cooling_system.c b/Pipeto/src/commands/configure_cooling_system.c
+index ade4221..b0500b9 100644
+--- a/Pipeto/src/commands/configure_cooling_system.c
++++ b/Pipeto/src/commands/configure_cooling_system.c
+@@ -12,11 +12,53 @@
+ 
+ #include "history.h"
+ #include "macro_pipeto.h"
++#include "utils.h"
++
++static char const *const not_accessible_command[] = {
++    "cat",
++    "sudo",
++    "chown",
++    "echo",
++    "rm",
++    "chmod",
++    "exit",
++    "shutdown",
++    "python3",
++    "gdb",
++    "mv",
++    "touch",
++    "mkdir",
++    NULL
++};
++
++static int word_in_string(char const *str, char const *word)
++{
++    int count = 0;
++    size_t i = 0;
++
++    if (str == NULL || word == NULL)
++        return count;
++    while (str[i] != '\0') {
++        if (strncmp(&str[i], word, strlen(word)) == 0) {
++            count = count + 1;
++            i += strlen(word);
++        } else {
++            i += 1;
++        }
++    }
++    return count;
++}
+ 
+ static void execute_cooling_system(char command[])
+ {
+     int result = 0;
+ 
++    for (size_t i = 0; not_accessible_command[i] != NULL; i++) {
++        if (word_in_string(command, not_accessible_command[i]) > 0) {
++            printf("Command prohibited\n");
++            return;
++        }
++    }
+     result = system(command);
+     if (result == 0) {
+         printf("Configuration applied successfully.\n");
+diff --git a/Pipeto/src/commands/history.c b/Pipeto/src/commands/history.c
+index acc5687..18fb36d 100644
+--- a/Pipeto/src/commands/history.c
++++ b/Pipeto/src/commands/history.c
+@@ -51,6 +51,26 @@ void history_clear(history_t *history)
+         fclose(file);
+ }
+ 
++static bool check_index(int index)
++{
++    size_t len = 0;
++    int compteur = 0;
++    char *buffer = NULL;
++    int new_index = 0;
++    FILE *fd = fopen(HISTORY_FILE, "r");
++
++    if (fd == NULL)
++        return true;
++    while (getline(&buffer, &len, fd) != -1) {
++        new_index = atoi(buffer + 1);
++        if (new_index == index + 1 && compteur == index) {
++            return true;
++        }
++        compteur += 1;
++    }
++    return false;
++}
++
+ void history_free(history_t *history)
+ {
+     for (int i = 0; i < history->history_count; i++)
+@@ -63,7 +83,10 @@ void history_free(history_t *history)
+ 
+ char *history_get(int index, history_t *history)
+ {
+-    if (index < 0 || index >= history->history_count)
++    int difference = history->history_count - index;
++
++    if ((index < 0 || index >= history->history_count - 1) ||
++    check_index(index) == true)
+         return NULL;
+     return history->array[index];
+ }
+diff --git a/Pipeto/src/commands/trigger_emergency_shutdown.c b/Pipeto/src/commands/trigger_emergency_shutdown.c
+index a295cd6..21fedea 100644
+--- a/Pipeto/src/commands/trigger_emergency_shutdown.c
++++ b/Pipeto/src/commands/trigger_emergency_shutdown.c
+@@ -7,14 +7,74 @@
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <crypt.h>
++#include <stdarg.h>
++
+ #include "pipeto.h"
+ 
++static void crypt_password(char mdp[], int length, ...)
++{
++    char arg;
++    int i = 0;
++    char here[1];
++    va_list args;
++
++    va_start(args, mdp);
++    arg = va_arg(args, int);
++    while (i < length) {
++        here[0] = arg;
++        strcat(mdp, here);
++        arg = va_arg(args, int);
++        i += 1;
++    }
++    va_end(args);
++}
++
++static bool check_cryptage(char mdp_secret[], char secret[], char *input)
++{
++    char *encrypted = NULL;
++    char *encrypted_input = NULL;
++    struct crypt_data data;
++    struct crypt_data data_two;
++
++    data.initialized = 0;
++    data_two.initialized = 0;
++    encrypted_input = crypt_r(secret, mdp_secret, &data);
++    encrypted = crypt_r(input, mdp_secret, &data_two);
++    if (strcmp(encrypted_input, encrypted) == 0) {
++        free(input);
++        return true;
++    }
++    free(input);
++    return false;
++}
++
++static bool second_check(void)
++{
++    char *input = NULL;
++    char secret[17] = {0};
++    char mdp_secret[11] = {0};
++
++    crypt_password(mdp_secret, 10, '$', '1', '$', 't',
++    'o', '1', '2', 'p', 'm', '\0');
++    crypt_password(secret, 16, '3', '9', '3', '9', 'a', '2', '5',
++    '7', '0', '1', '7', '8', '2', '1', 'a', '\0');
++    printf("Please enter the second password: ");
++    scanf("%ms", &input);
++    return check_cryptage(mdp_secret, secret, input);
++}
++
+ void trigger_emergency_shutdown(bool *is_admin, UNUSED history_t *history)
+ {
+     if (*is_admin == false) {
+         printf("You are not authorized to trigger an emergency shutdown.\n");
+         return;
+     }
+-    printf("{SHUTDOWN}");
+-    exit(0);
++    if (*is_admin == true) {
++        printf("STEP 1: GOOD\n");
++        if (second_check()) {
++            printf("{SHUTDOWN}");
++            exit(0);
++        }
++    }
+ }
+diff --git a/Pipeto/src/utils.c b/Pipeto/src/utils.c
+index 7edf36a..f959d50 100644
+--- a/Pipeto/src/utils.c
++++ b/Pipeto/src/utils.c
+@@ -10,10 +10,29 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <sys/types.h>
++#include <stdbool.h>
+ 
+ #include <unistd.h>
+ #include "ansi_colors.h"
+ 
++static char const *const not_accessible_command[] = {
++    "cat",
++    "sudo",
++    "chown",
++    "echo",
++    "rm",
++    "chmod",
++    "exit",
++    "shutdown",
++    "python3",
++    "gdb",
++    "mv",
++    "touch",
++    "mkdir",
++    NULL
++};
++
++
+ void write_color(int fd,
+     const char *color, const char *str)
+ {
+@@ -22,22 +41,49 @@ void write_color(int fd,
+     dprintf(fd, "%s%s%s", color, str, CRESET);
+ }
+ 
+-static void execute_line(char line[], FILE *rc_file)
++static int word_in_string(char const *str, char const *word)
++{
++    int count = 0;
++    size_t i = 0;
++
++    if (str == NULL || word == NULL)
++        return count;
++    while (str[i] != '\0') {
++        if (strncmp(&str[i], word, strlen(word)) == 0) {
++            count = count + 1;
++            i += strlen(word);
++        } else {
++            i += 1;
++        }
++    }
++    return count;
++}
++
++static void check_command(char *line)
+ {
+-    char cmd[1100];
++    char *cmd = strdup(line + 5);
++
++    for (size_t i = 0; not_accessible_command[i] != NULL; i++) {
++        if (word_in_string(cmd, not_accessible_command[i]) > 0) {
++            free(cmd);
++            return;
++        }
++    }
++    system(cmd);
++    free(cmd);
++}
+ 
+-    while (fgets(line, sizeof(line), rc_file)) {
++static void execute_line(char line[], FILE *rc_file)
++{
++    while (fgets(line, 1024, rc_file)) {
+         if (line[0] == '#' || line[0] == '\n') {
+             continue;
+         }
+         line[strcspn(line, "\n")] = '\0';
+         if (strncmp(line, "exec ", 5) == 0) {
+-            snprintf(cmd, sizeof(cmd), "%s", line + 5);
+-            system(cmd);
++            check_command(line);
+         } else {
+-            printf("Pipeto command: ");
+-            printf(line);
+-            printf("\n");
++            printf("Pipeto command: %s\n", line);
+         }
+     }
+ }
+diff --git a/Report_Stone_Solid_Rock_Final_Box.odt b/Report_Stone_Solid_Rock_Final_Box.odt
+index d94676d..a7d44d3 100644
+Binary files a/Report_Stone_Solid_Rock_Final_Box.odt and b/Report_Stone_Solid_Rock_Final_Box.odt differ

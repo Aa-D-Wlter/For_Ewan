@@ -1,0 +1,13 @@
+diff --git a/Pipeto/src/commands/monitor_radiation_levels.c b/Pipeto/src/commands/monitor_radiation_levels.c
+index 472cee3..03cd611 100644
+--- a/Pipeto/src/commands/monitor_radiation_levels.c
++++ b/Pipeto/src/commands/monitor_radiation_levels.c
+@@ -23,7 +23,7 @@ void monitor_radiation_levels(UNUSED bool *is_admin, UNUSED history_t *history)
+     void (*function_ptr)(void) = NULL;
+ 
+     printf("Enter radiation levels: ");
+-    gets(buffer);
++    fgets(buffer, sizeof(buffer), stdin);
+     printf("Radiation Levels: %s\n", buffer);
+     if (function_ptr) {
+         function_ptr();

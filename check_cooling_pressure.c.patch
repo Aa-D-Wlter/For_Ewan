@@ -1,0 +1,44 @@
+diff --git a/Pipeto/src/commands/check_cooling_pressure.c b/Pipeto/src/commands/check_cooling_pressure.c
+index 88758a2..65e632f 100644
+--- a/Pipeto/src/commands/check_cooling_pressure.c
++++ b/Pipeto/src/commands/check_cooling_pressure.c
+@@ -14,11 +14,15 @@
+ 
+ static void load_data(char *data)
+ {
++    if (data == NULL) {
++        return;
++    }
+     strcpy(data, "Pressure OK");
+ }
+ 
+ static void log_pressure_status(const char *status)
+ {
++    print_message("Checking cooling pressure...\n", 1);
+     printf("Cooling pressure status: %s\n", status);
+ }
+ 
+@@ -33,18 +37,19 @@ void check_cooling_pressure(UNUSED bool *is_admin, UNUSED history_t *history)
+ {
+     char *data = (char *)malloc(16);
+     char temp_buffer[32];
+-    char sensitive_info[32] = "{Sensitive Data}";
++    char sensitive_info[17] = {0};
+ 
++    crypt_password(sensitive_info, 16, '{', 'S', 'e', 'n', 's',
++    'i', 't', 'i', 'v', 'e', ' ', 'D', 'a', 't', 'a', '}', '\0');
+     load_data(data);
+     print_message("Cooling pressure check in progress...\n", 2);
+     simulate_sensor_reading();
+-    print_message("Checking cooling pressure...\n", 1);
+     log_pressure_status(data);
+     free(data);
++    data = NULL;
+     sleep(3);
+-    if (strcmp(data, "Pressure OK")) {
++    if (data != NULL && strcmp(data, "Pressure OK") == 0)
+         printf("Sensitive Info: %s\n", sensitive_info);
+-    }
+     snprintf(temp_buffer, sizeof(temp_buffer),
+     "Temporary data: %d", rand() % 100);
+     printf("Temporary buffer: %s\n", temp_buffer);

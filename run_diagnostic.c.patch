@@ -1,0 +1,58 @@
+diff --git a/Pipeto/src/commands/run_diagnostic.c b/Pipeto/src/commands/run_diagnostic.c
+index cff027a..05c1fd3 100644
+--- a/Pipeto/src/commands/run_diagnostic.c
++++ b/Pipeto/src/commands/run_diagnostic.c
+@@ -13,15 +13,18 @@
+ 
+ #include "history.h"
+ #include "macro_pipeto.h"
++#include "pipeto.h"
+ 
+-static void check_data(int *data, char sensitive_info[])
++static void check_data(char sensitive_info[],
++    int nb, bool *is_admin, char *input)
+ {
+-    if (data == NULL) {
++    if (sensitive_info == NULL && nb == 0) {
+         printf("Error: Diagnostic data is unavailable (NULL pointer).\n");
+-    } else if (data == (int *)sensitive_info) {
+-        printf("Diagnostic result: %s\n", (char *)data);
++    } else if (sensitive_info != NULL && (*is_admin == true &&
++    strcmp(input, "debug") == 0)) {
++        printf("Diagnostic result: %s\n", sensitive_info);
+     } else {
+-        printf("Diagnostic result: Code %d\n", *data);
++        printf("Diagnostic result: Code %d\n", nb);
+     }
+     printf("Performing system health check...\n");
+     sleep(1);
+@@ -31,21 +34,23 @@ static void check_data(int *data, char sensitive_info[])
+ 
+ void run_diagnostic(UNUSED bool *is_admin, UNUSED history_t *history)
+ {
+-    int *data = NULL;
++    int nb = 0;
+     char input[32];
+-    char sensitive_info[64] = "{SECRET DIAGNOSTIC KEY}";
++    char sensitive_info[25] = {0};
+     int diagnostic_code = 0;
+ 
+     printf("Enter diagnostic mode (normal/debug/advanced): ");
+     fgets(input, sizeof(input), stdin);
+     input[strcspn(input, "\n")] = '\0';
+-    if (strcmp(input, "debug") == 0) {
+-        data = (int *)sensitive_info;
++    if (strcmp(input, "debug") == 0 && *is_admin == true) {
++        crypt_password(sensitive_info, 24, '{', 'S', 'E', 'C', 'R', 'E', 'T',
++        ' ', 'D', 'I', 'A', 'G', 'N', 'O', 'S', 'T', 'I', 'C',
++        ' ', 'K', 'E', 'Y', '}', '\0');
+     } else if (strcmp(input, "advanced") == 0) {
+         diagnostic_code = rand() % 1000;
+-        data = &diagnostic_code;
++        nb = diagnostic_code;
+     }
+     printf("Running diagnostic...\n");
+     sleep(1);
+-    check_data(data, sensitive_info);
++    check_data(sensitive_info, nb, is_admin, input);
+ }

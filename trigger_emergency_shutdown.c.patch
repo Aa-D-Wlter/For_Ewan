@@ -1,0 +1,63 @@
+diff --git a/Pipeto/src/commands/trigger_emergency_shutdown.c b/Pipeto/src/commands/trigger_emergency_shutdown.c
+index a295cd6..2c0a778 100644
+--- a/Pipeto/src/commands/trigger_emergency_shutdown.c
++++ b/Pipeto/src/commands/trigger_emergency_shutdown.c
+@@ -7,14 +7,56 @@
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
++#include <crypt.h>
++#include <stdarg.h>
++
+ #include "pipeto.h"
+ 
++static bool check_cryptage(char mdp_secret[], char secret[], char *input)
++{
++    char *encrypted = NULL;
++    char *encrypted_input = NULL;
++    struct crypt_data data;
++    struct crypt_data data_two;
++
++    data.initialized = 0;
++    data_two.initialized = 0;
++    encrypted_input = crypt_r(secret, mdp_secret, &data);
++    encrypted = crypt_r(input, mdp_secret, &data_two);
++    if (strcmp(encrypted_input, encrypted) == 0) {
++        free(input);
++        return true;
++    }
++    free(input);
++    return false;
++}
++
++static bool second_check(void)
++{
++    char *input = NULL;
++    char secret[17] = {0};
++    char mdp_secret[11] = {0};
++
++    crypt_password(mdp_secret, 10, '$', '1', '$', 't',
++    'o', '1', '2', 'p', 'm', '\0');
++    crypt_password(secret, 16, '3', '9', '3', '9', 'a', '2', '5',
++    '7', '0', '1', '7', '8', '2', '1', 'a', '\0');
++    printf("Please enter the second password: ");
++    scanf("%ms", &input);
++    return check_cryptage(mdp_secret, secret, input);
++}
++
+ void trigger_emergency_shutdown(bool *is_admin, UNUSED history_t *history)
+ {
+     if (*is_admin == false) {
+         printf("You are not authorized to trigger an emergency shutdown.\n");
+         return;
+     }
+-    printf("{SHUTDOWN}");
+-    exit(0);
++    if (*is_admin == true) {
++        printf("STEP 1: GOOD\n");
++        if (second_check()) {
++            printf("{SHUTDOWN}");
++            exit(0);
++        }
++    }
+ }

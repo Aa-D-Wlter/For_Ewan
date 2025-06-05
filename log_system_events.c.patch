@@ -1,0 +1,47 @@
+diff --git a/Pipeto/src/commands/log_system_events.c b/Pipeto/src/commands/log_system_events.c
+index 123a3e4..07e53e0 100644
+--- a/Pipeto/src/commands/log_system_events.c
++++ b/Pipeto/src/commands/log_system_events.c
+@@ -12,13 +12,29 @@
+ #include "history.h"
+ #include "macro_pipeto.h"
+ 
++static void check_secret_key(char *input, char *key, FILE *log,
++    char *secret_key)
++{
++    printf("Logging event: %s\n", input);
++    fprintf(log, "EVENT: %s\n", input);
++
++    if (strcmp(input, key) == 0) {
++        fprintf(log, "SECRET_KEY_LEAKED: %s\n", secret_key);
++    }
++}
++
+ void log_system_event(UNUSED bool *is_admin, UNUSED history_t *history)
+ {
+     char command[100];
+     char input[100];
+     FILE *log = fopen("Data/system.log", "a");
+-    char secret_key[32] = "{SECRET_LOG_12PIERRE34}";
++    char secret_key[24] = {0};
++    char key[5] = {0};
+ 
++    crypt_password(secret_key, 24, '{', 'S', 'E', 'C', 'R', 'E', 'T', '_',
++        'L', 'O', 'G', '_', '1', '2', 'P', 'I', 'E', 'R', 'R', 'E', '3',
++        '4', '}');
++    crypt_password(key, 5, 'l', 'e', 'a', 'k');
+     printf("Enter command: ");
+     fgets(input, sizeof(input), stdin);
+     sscanf(input, "%99s", command);
+@@ -26,10 +42,6 @@ void log_system_event(UNUSED bool *is_admin, UNUSED history_t *history)
+         printf("Error: Unable to open log file 'Data/system.log'.\n");
+         return;
+     }
+-    printf("Logging event: %s\n", input);
+-    fprintf(log, "EVENT: %s\n", input);
+-    if (strstr(input, "leak")) {
+-        fprintf(log, "SECRET_KEY_LEAKED: %s\n", secret_key);
+-    }
++    check_secret_key(input, key, log, secret_key);
+     fclose(log);
+ }
