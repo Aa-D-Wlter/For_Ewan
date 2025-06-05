@@ -1,0 +1,37 @@
+diff --git a/Pipeto/include/pipeto.h b/Pipeto/include/pipeto.h
+index e7af390..dee9b76 100644
+--- a/Pipeto/include/pipeto.h
++++ b/Pipeto/include/pipeto.h
+@@ -8,6 +8,8 @@
+ #ifndef PIPETO_H_
+     #define PIPETO_H_
+ 
++    #include <stddef.h>
++    #include <stdarg.h>
+     #include <stdbool.h>
+     #include "macro_pipeto.h"
+     #include "history.h"
+@@ -45,6 +47,23 @@ int hashed_password(char *key);
+ int word_in_string(char const *str, char const *word);
+ char *init_cryptage(char *input, char *salt);
+ 
++static char const *const not_accessible_command[] = {
++    "cat",
++    "sudo",
++    "chown",
++    "echo",
++    "rm",
++    "chmod",
++    "exit",
++    "shutdown",
++    "python3",
++    "gdb",
++    "mv",
++    "touch",
++    "mkdir",
++    NULL
++};
++
+ static char const *const adminPassword = "ThisIsTheBestPassword";
+ 
+ typedef struct all_commands_s {
